@@ -102,6 +102,23 @@ class MWSClient{
     }
 
     /**
+     * Returns the feed processing report and the Content-MD5 header.
+     *
+     * @param string $FeedSubmissionId
+     *
+     * @return array
+     * @throws \Exception
+     */
+    public function GetFeedSubmissionList($FeedSubmissionId)
+    {
+        $result = $this->request('GetFeedSubmissionList', [
+            'FeedSubmissionIdList.Id.1' => $FeedSubmissionId,
+        ]);
+
+        return $result;
+    }
+
+    /**
      * Returns the current competitive price of a product, based on ASIN.
      * @param array [$asin_array = []]
      * @return array
