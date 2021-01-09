@@ -43,10 +43,9 @@ class MWSClient {
         'A1VC38T7YXB528' => 'mws.amazonservices.jp',
         'AAHKV2X7AFYLW' => 'mws.amazonservices.com.cn',
         'A39IBJ37TRP1C6' => 'mws.amazonservices.com.au',
-	      'A2Q3Y263D00KWC' => 'mws.amazonservices.com',
+        'A2Q3Y263D00KWC' => 'mws.amazonservices.com',
         'A1805IZSGTT6HS' => 'mws-eu.amazonservices.com', //Netherlands NL
         'A2NODRKZP88ZB9' => 'mws-eu.amazonservices.com', //Sweden SE
-        'A1805IZSGTT6HS' => 'mws-eu.amazonservices.com',
         'A33AVAJ2PDY3EV' => 'mws-eu.amazonservices.com',
     ];
 
