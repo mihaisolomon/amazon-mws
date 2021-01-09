@@ -5,6 +5,7 @@ use DateTime;
 use Exception;
 use DateTimeZone;
 use Illuminate\Support\Facades\Log;
+use MCS\Exceptions\RequestThrottled;
 use MCS\MWSEndPoint;
 use League\Csv\Reader;
 use League\Csv\Writer;
@@ -42,9 +43,11 @@ class MWSClient {
         'A1VC38T7YXB528' => 'mws.amazonservices.jp',
         'AAHKV2X7AFYLW' => 'mws.amazonservices.com.cn',
         'A39IBJ37TRP1C6' => 'mws.amazonservices.com.au',
-	    'A2Q3Y263D00KWC' => 'mws.amazonservices.com',
+	      'A2Q3Y263D00KWC' => 'mws.amazonservices.com',
         'A1805IZSGTT6HS' => 'mws-eu.amazonservices.com', //Netherlands NL
         'A2NODRKZP88ZB9' => 'mws-eu.amazonservices.com', //Sweden SE
+        'A1805IZSGTT6HS' => 'mws-eu.amazonservices.com',
+        'A33AVAJ2PDY3EV' => 'mws-eu.amazonservices.com',
     ];
 
     protected $debugNextFeed = false;
@@ -105,6 +108,23 @@ class MWSClient {
     }
 
     /**
+     * Returns the feed processing report and the Content-MD5 header.
+     *
+     * @param string $FeedSubmissionId
+     *
+     * @return array
+     * @throws \Exception
+     */
+    public function GetFeedSubmissionList($FeedSubmissionId)
+    {
+        $result = $this->request('GetFeedSubmissionList', [
+            'FeedSubmissionIdList.Id.1' => $FeedSubmissionId,
+        ]);
+
+        return $result;
+    }
+
+    /**
      * Returns the current competitive price of a product, based on ASIN.
      * @param array [$asin_array = []]
      * @return array
@@ -142,7 +162,7 @@ class MWSClient {
         $array = [];
         foreach ($response as $product) {
             if (isset($product['Product']['CompetitivePricing']['CompetitivePrices']['CompetitivePrice']['Price'])) {
-                $array[$product['Product']['Identifiers']['MarketplaceASIN']['ASIN']] = $product['Product']['CompetitivePricing']['CompetitivePrices']['CompetitivePrice']['Price'];
+                $array[$product['Product']['Identifiers']['MarketplaceASIN']['ASIN']] = $product['Product']['CompetitivePricing']['CompetitivePrices']['CompetitivePrice'];
             }
         }
         return $array;
@@ -688,6 +708,14 @@ class MWSClient {
                         if (isset($product['SalesRankings']['SalesRank'])) {
                             $array['SalesRank'] = $product['SalesRankings']['SalesRank'];
                         }
+
+                        if (isset($product['AttributeSets']['ItemAttributes']['ItemDimensions'])) {
+                            $array['ItemDimensions'] = array_map(
+                                'floatval',
+                                $product['AttributeSets']['ItemAttributes']['ItemDimensions']
+                            );
+                        }
+                        
                         $found[$asin][] = $array;
                     }
                 }
@@ -1202,8 +1230,10 @@ class MWSClient {
 
     /**
      * Request MWS
+     * @throws RequestThrottled
+     * @throws Exception
      */
-    private function request($endPoint, array $query = [], $body = null, $raw = false)
+    public function request($endPoint, array $query = [], $body = null, $raw = false)
     {
 
         $endPoint = MWSEndPoint::get($endPoint);
@@ -1310,6 +1340,11 @@ class MWSClient {
                     $error = simplexml_load_string($message);
                     $message = $error->Error->Message;
                 }
+
+//                if ($message == 'Request is throttled') {
+//                    throw new RequestThrottled;
+//                }
+
             } else {
                 $message = 'An error occured';
             }
@@ -1319,5 +1354,44 @@ class MWSClient {
     
     public function setClient(Client $client) {
         $this->client = $client;
+    }
+
+    /**
+     * Post to update shipping information for an order (_POST_FLAT_FILE_FULFILLMENT_DATA_)
+     * @param $products
+     * @return array
+     */
+    public function updateShippingInformation($products) {
+
+        if (!is_array($products)) {
+            $products = [$products];
+        }
+
+        $csv = Writer::createFromFileObject(new SplTempFileObject());
+
+        $csv->setDelimiter("\t");
+        $csv->setInputEncoding('iso-8859-1');
+
+        $header = [
+            'order-id',
+            'order-item-id',
+            'quantity',
+            'ship-date',
+            'carrier-code',
+            'carrier-name',
+            'tracking-number',
+            'ship-method',
+        ];
+
+        $csv->insertOne($header);
+
+        foreach ($products as $product) {
+            $csv->insertOne(
+                array_values($product->toArray())
+            );
+        }
+
+        return $this->SubmitFeed('_POST_FLAT_FILE_FULFILLMENT_DATA_', $csv);
+
     }
 }

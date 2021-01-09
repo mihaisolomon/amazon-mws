@@ -1,13 +1,11 @@
 # Amazon Marketplace Webservices
-[![Latest Stable Version](https://poser.pugx.org/mcs/amazon-mws/v/stable)](https://packagist.org/packages/mcs/amazon-mws) [![Latest Unstable Version](https://poser.pugx.org/mcs/amazon-mws/v/unstable)](https://packagist.org/packages/mcs/amazon-mws) [![License](https://poser.pugx.org/mcs/amazon-mws/license)](https://packagist.org/packages/mcs/amazon-mws) [![Total Downloads](https://poser.pugx.org/mcs/amazon-mws/downloads)](https://packagist.org/packages/mcs/amazon-mws)
-
-[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=FQG5EWN987PJW)
+[![Latest Stable Version](https://poser.pugx.org/mihaisolomon/amazon-mws/v/stable)](https://packagist.org/packages/mihaisolomon/amazon-mws) [![Latest Unstable Version](https://poser.pugx.org/mihaisolomon/amazon-mws/v/unstable)](https://packagist.org/packages/mihaisolomon/amazon-mws) [![License](https://poser.pugx.org/mcs/amazon-mws/license)](https://packagist.org/packages/mihaisolomon/amazon-mws) [![Total Downloads](https://poser.pugx.org/mihaisolomon/amazon-mws/downloads)](https://packagist.org/packages/mihaisolomon/amazon-mws)
 
 Interaction with the Amazon Api for vendors called MWS
 
 ### Installation:
 ```bash
-$ composer require mcs/amazon-mws
+$ composer require mihaisolomon/amazon-mws
 ```
 ### Initiate the client
 ```php
