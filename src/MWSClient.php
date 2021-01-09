@@ -4,6 +4,7 @@ namespace MCS;
 use DateTime;
 use Exception;
 use DateTimeZone;
+use Illuminate\Support\Facades\Log;
 use MCS\Exceptions\RequestThrottled;
 use MCS\MWSEndPoint;
 use League\Csv\Reader;
@@ -13,7 +14,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\BadResponseException;
 use Spatie\ArrayToXml\ArrayToXml;
 
-class MWSClient{
+class MWSClient {
 
     const SIGNATURE_METHOD = 'HmacSHA256';
     const SIGNATURE_VERSION = '2';
@@ -42,7 +43,9 @@ class MWSClient{
         'A1VC38T7YXB528' => 'mws.amazonservices.jp',
         'AAHKV2X7AFYLW' => 'mws.amazonservices.com.cn',
         'A39IBJ37TRP1C6' => 'mws.amazonservices.com.au',
-	    'A2Q3Y263D00KWC' => 'mws.amazonservices.com',
+	      'A2Q3Y263D00KWC' => 'mws.amazonservices.com',
+        'A1805IZSGTT6HS' => 'mws-eu.amazonservices.com', //Netherlands NL
+        'A2NODRKZP88ZB9' => 'mws-eu.amazonservices.com', //Sweden SE
         'A1805IZSGTT6HS' => 'mws-eu.amazonservices.com',
         'A33AVAJ2PDY3EV' => 'mws-eu.amazonservices.com',
     ];
@@ -467,10 +470,22 @@ class MWSClient{
             'NextToken' => $nextToken,
         ];
 
-        $response = $this->request(
-            'ListOrdersByNextToken',
-            $query
-        );
+        do {
+            try {
+                $response = $this->request(
+                    'ListOrdersByNextToken',
+                    $query);
+            } catch (Exception $exception) {
+                if ($exception->getMessage() == 'Request is throttled') {
+                    $response = -1;
+                    Log::debug("[ListOrdersByNextToken][{$exception->getCode()}]" . ':::::::' . 'Retrying request in 30s.');
+                    sleep(30);
+                } else {
+                    throw $exception;
+                }
+            }
+        } while ($response === -1);
+
         if (isset($response['ListOrdersByNextTokenResult']['Orders']['Order'])) {
             if(isset($response['ListOrdersByNextTokenResult']['NextToken'])){
                 $data['ListOrders'] = $response['ListOrdersByNextTokenResult']['Orders']['Order'];
@@ -509,12 +524,25 @@ class MWSClient{
      * Returns order items based on the AmazonOrderId that you specify.
      * @param string $AmazonOrderId
      * @return array
+     * @throws Exception
      */
     public function ListOrderItems($AmazonOrderId)
     {
-        $response = $this->request('ListOrderItems', [
-            'AmazonOrderId' => $AmazonOrderId
-        ]);
+        do {
+            try {
+                $response = $this->request('ListOrderItems', [
+                    'AmazonOrderId' => $AmazonOrderId
+                ]);
+            } catch (\Exception $exception) {
+                if ($exception->getMessage() == 'Request is throttled') {
+                    $response = -1;
+                    Log::debug("[ListOrderItems][{$exception->getCode()}]" . ':::::::' . 'Retrying request in 30s.');
+                    sleep(30);
+                } else {
+                    throw $exception;
+                }
+            }
+        } while ($response === -1);
 
         $result = array_values($response['ListOrderItemsResult']['OrderItems']);
 
